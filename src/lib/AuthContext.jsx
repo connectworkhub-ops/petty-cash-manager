@@ -9,9 +9,14 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // Check for existing session in localStorage
-        const savedUser = localStorage.getItem('petty_cash_user')
-        if (savedUser) {
-            setUser(JSON.parse(savedUser))
+        try {
+            const savedUser = localStorage.getItem('petty_cash_user')
+            if (savedUser) {
+                setUser(JSON.parse(savedUser))
+            }
+        } catch (error) {
+            console.error('Error parsing saved user:', error)
+            localStorage.removeItem('petty_cash_user')
         }
         setLoading(false)
     }, [])
