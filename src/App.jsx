@@ -4,8 +4,11 @@ import { AuthProvider, useAuth } from './lib/AuthContext'
 import LoadingSpinner from './components/LoadingSpinner'
 
 // Lazy load components
-const Layout = lazy(() => import('./components/Layout'))
-const Home = lazy(() => import('./pages/Home'))
+import Layout from './components/Layout'
+import Home from './pages/Home'
+import Login from './pages/Login'
+
+// Lazy load other components
 const AddProject = lazy(() => import('./pages/AddProject'))
 const AddPettyCash = lazy(() => import('./pages/AddPettyCash'))
 const Report = lazy(() => import('./pages/Report'))
@@ -13,7 +16,6 @@ const ProjectDetails = lazy(() => import('./pages/ProjectDetails'))
 const Master = lazy(() => import('./pages/Master'))
 const AddUser = lazy(() => import('./pages/AddUser'))
 const AssignUser = lazy(() => import('./pages/AssignUser'))
-const Login = lazy(() => import('./pages/Login'))
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
     const { user, loading } = useAuth()
