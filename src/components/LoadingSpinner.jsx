@@ -14,7 +14,7 @@ const LoadingSpinner = ({ fullPage = false }) => {
 
     if (fullPage) {
         return (
-            <div className="fixed inset-0 bg-midnight-950/50 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="fixed inset-0 bg-midnight-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
                 {spinner}
             </div>
         );
