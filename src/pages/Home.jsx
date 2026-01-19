@@ -15,27 +15,15 @@ export default function Home() {
         try {
             const { data: projectsData, error: projectsError } = await supabase
                 .from('projects')
-                .select('*')
+                .select('*, petty_cash_entries(amount), expenses(amount)')
 
             if (projectsError) throw projectsError
 
-            // Fetch totals for each project
-            const projectsWithTotals = await Promise.all(projectsData.map(async (project) => {
-                const { data: cashData } = await supabase
-                    .from('petty_cash_entries')
-                    .select('amount')
-                    .eq('project_id', project.id)
-
-                const { data: expenseData } = await supabase
-                    .from('expenses')
-                    .select('amount')
-                    .eq('project_id', project.id)
-
-                const totalCash = cashData?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
-                const totalExpenses = expenseData?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
-
+            const projectsWithTotals = projectsData.map(project => {
+                const totalCash = project.petty_cash_entries?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
+                const totalExpenses = project.expenses?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
                 return { ...project, totalCash, totalExpenses }
-            }))
+            })
 
             setProjects(projectsWithTotals)
         } catch (error) {
