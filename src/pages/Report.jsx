@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Download } from 'lucide-react'
 
-import { utils, writeFile } from 'xlsx'
 
 export default function Report() {
     const [reportData, setReportData] = useState([])
@@ -43,58 +42,68 @@ export default function Report() {
         }
     }
 
-    const handleExport = (project) => {
-        const wb = utils.book_new()
+    const [exporting, setExporting] = useState(false)
 
-        // --- Sheet 1: Summary ---
-        // 1. Payment Received History
-        const summaryData = [
-            ['Payment Received History'],
-            ['Date', 'Amount'],
-            ...project.cashEntries.map(c => [
-                new Date(c.created_at).toLocaleDateString(),
-                c.amount
-            ]),
-            ['', ''], // Spacer
-            ['Total Expenses Incurred', project.totalExpenses]
-        ]
+    const handleExport = async (project) => {
+        setExporting(true)
+        try {
+            const { utils, writeFile } = await import('xlsx')
+            const wb = utils.book_new()
 
-        const wsSummary = utils.aoa_to_sheet(summaryData)
+            // --- Sheet 1: Summary ---
+            // 1. Payment Received History
+            const summaryData = [
+                ['Payment Received History'],
+                ['Date', 'Amount'],
+                ...project.cashEntries.map(c => [
+                    new Date(c.created_at).toLocaleDateString(),
+                    c.amount
+                ]),
+                ['', ''], // Spacer
+                ['Total Expenses Incurred', project.totalExpenses]
+            ]
 
-        // Adjust column widths for Summary
-        wsSummary['!cols'] = [{ wch: 20 }, { wch: 15 }]
+            const wsSummary = utils.aoa_to_sheet(summaryData)
 
-        utils.book_append_sheet(wb, wsSummary, "Summary")
+            // Adjust column widths for Summary
+            wsSummary['!cols'] = [{ wch: 20 }, { wch: 15 }]
 
-        // --- Sheet 2: Expenses Incurred ---
-        const expenseData = [
-            ['Date', 'Type', 'Head', 'User', 'Description', 'Amount'],
-            ...project.expenses.map(e => [
-                new Date(e.created_at).toLocaleDateString(),
-                e.expense_type,
-                e.expense_head,
-                e.user_name,
-                e.description || '',
-                e.amount
-            ])
-        ]
+            utils.book_append_sheet(wb, wsSummary, "Summary")
 
-        const wsExpenses = utils.aoa_to_sheet(expenseData)
+            // --- Sheet 2: Expenses Incurred ---
+            const expenseData = [
+                ['Date', 'Type', 'Head', 'User', 'Description', 'Amount'],
+                ...project.expenses.map(e => [
+                    new Date(e.created_at).toLocaleDateString(),
+                    e.expense_type,
+                    e.expense_head,
+                    e.user_name,
+                    e.description || '',
+                    e.amount
+                ])
+            ]
 
-        // Adjust column widths for Expenses
-        wsExpenses['!cols'] = [
-            { wch: 15 }, // Date
-            { wch: 20 }, // Type
-            { wch: 20 }, // Head
-            { wch: 15 }, // User
-            { wch: 40 }, // Description
-            { wch: 15 }  // Amount
-        ]
+            const wsExpenses = utils.aoa_to_sheet(expenseData)
 
-        utils.book_append_sheet(wb, wsExpenses, "Expenses Incurred")
+            // Adjust column widths for Expenses
+            wsExpenses['!cols'] = [
+                { wch: 15 }, // Date
+                { wch: 20 }, // Type
+                { wch: 20 }, // Head
+                { wch: 15 }, // User
+                { wch: 40 }, // Description
+                { wch: 15 }  // Amount
+            ]
 
-        // Generate Excel File
-        writeFile(wb, `${project.name}_Report.xlsx`)
+            utils.book_append_sheet(wb, wsExpenses, "Expenses Incurred")
+
+            // Generate Excel File
+            writeFile(wb, `${project.name}_Report.xlsx`)
+        } catch (error) {
+            console.error('Export failed:', error)
+        } finally {
+            setExporting(false)
+        }
     }
 
     return (
@@ -127,10 +136,11 @@ export default function Report() {
                                     <td className="p-4">
                                         <button
                                             onClick={() => handleExport(row)}
-                                            className="p-2 text-text-muted hover:text-primary hover:bg-midnight-900 rounded-lg transition-colors"
-                                            title="Export Data"
+                                            disabled={exporting}
+                                            className={`p-2 rounded-lg transition-colors ${exporting ? 'opacity-50 cursor-not-allowed' : 'text-text-muted hover:text-primary hover:bg-midnight-900'}`}
+                                            title={exporting ? 'Exporting...' : 'Export Data'}
                                         >
-                                            <Download size={18} />
+                                            <Download size={18} className={exporting ? 'animate-bounce' : ''} />
                                         </button>
                                     </td>
                                 </tr>

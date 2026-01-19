@@ -1,15 +1,19 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Layout from './components/Layout'
-import Home from './pages/Home'
-import AddProject from './pages/AddProject'
-import AddPettyCash from './pages/AddPettyCash'
-import Report from './pages/Report'
-import ProjectDetails from './pages/ProjectDetails'
-import Master from './pages/Master'
-import AddUser from './pages/AddUser'
-import AssignUser from './pages/AssignUser'
-import Login from './pages/Login'
+import { lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './lib/AuthContext'
+import LoadingSpinner from './components/LoadingSpinner'
+
+// Lazy load components
+const Layout = lazy(() => import('./components/Layout'))
+const Home = lazy(() => import('./pages/Home'))
+const AddProject = lazy(() => import('./pages/AddProject'))
+const AddPettyCash = lazy(() => import('./pages/AddPettyCash'))
+const Report = lazy(() => import('./pages/Report'))
+const ProjectDetails = lazy(() => import('./pages/ProjectDetails'))
+const Master = lazy(() => import('./pages/Master'))
+const AddUser = lazy(() => import('./pages/AddUser'))
+const AssignUser = lazy(() => import('./pages/AssignUser'))
+const Login = lazy(() => import('./pages/Login'))
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
     const { user, loading } = useAuth()
@@ -25,23 +29,25 @@ function App() {
     return (
         <AuthProvider>
             <Router>
-                <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                        <Route index element={<Home />} />
-                        <Route path="report" element={<Report />} />
-                        <Route path="project/:id" element={<ProjectDetails />} />
+                <Suspense fallback={<LoadingSpinner fullPage />}>
+                    <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                            <Route index element={<Home />} />
+                            <Route path="report" element={<Report />} />
+                            <Route path="project/:id" element={<ProjectDetails />} />
 
-                        {/* Admin Only Routes */}
-                        <Route path="master" element={<ProtectedRoute adminOnly><Master /></ProtectedRoute>} />
-                        <Route path="add-project" element={<ProtectedRoute adminOnly><AddProject /></ProtectedRoute>} />
-                        <Route path="add-petty-cash" element={<ProtectedRoute adminOnly><AddPettyCash /></ProtectedRoute>} />
-                        <Route path="add-user" element={<ProtectedRoute adminOnly><AddUser /></ProtectedRoute>} />
-                        <Route path="assign-user" element={<ProtectedRoute adminOnly><AssignUser /></ProtectedRoute>} />
+                            {/* Admin Only Routes */}
+                            <Route path="master" element={<ProtectedRoute adminOnly><Master /></ProtectedRoute>} />
+                            <Route path="add-project" element={<ProtectedRoute adminOnly><AddProject /></ProtectedRoute>} />
+                            <Route path="add-petty-cash" element={<ProtectedRoute adminOnly><AddPettyCash /></ProtectedRoute>} />
+                            <Route path="add-user" element={<ProtectedRoute adminOnly><AddUser /></ProtectedRoute>} />
+                            <Route path="assign-user" element={<ProtectedRoute adminOnly><AssignUser /></ProtectedRoute>} />
 
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Route>
-                </Routes>
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Route>
+                    </Routes>
+                </Suspense>
             </Router>
         </AuthProvider>
     )
