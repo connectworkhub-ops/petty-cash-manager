@@ -12,8 +12,10 @@ export default function AssignPettyCash() {
     const [projectPettyCash, setProjectPettyCash] = useState(0)
 
     const [assignedUsers, setAssignedUsers] = useState([])
-    // key: user_id, value: allocated amount
+    // key: user_id, value: new increment amount for input field
     const [allocations, setAllocations] = useState({})
+    // key: user_id, value: current cumulative total from database
+    const [currentTotals, setCurrentTotals] = useState({})
 
     useEffect(() => {
         fetchProjects()
@@ -25,6 +27,7 @@ export default function AssignPettyCash() {
         } else {
             setAssignedUsers([])
             setAllocations({})
+            setCurrentTotals({})
             setProjectPettyCash(0)
         }
     }, [selectedProjectId])
@@ -77,20 +80,25 @@ export default function AssignPettyCash() {
                 .select('user_id, amount')
                 .eq('project_id', projectId)
 
+            const tempCurrentTotals = {}
             const tempAllocations = {}
+            
             if (allocationsData) {
                 allocationsData.forEach(row => {
-                    tempAllocations[row.user_id] = Number(row.amount) || 0
+                    tempCurrentTotals[row.user_id] = Number(row.amount) || 0
                 })
             }
             
             // Ensure all assigned users exist in state even if 0
             users.forEach(u => {
-                if (!(u.id in tempAllocations)) {
-                    tempAllocations[u.id] = 0
+                if (!(u.id in tempCurrentTotals)) {
+                    tempCurrentTotals[u.id] = 0
                 }
+                // Inputs always start empty
+                tempAllocations[u.id] = ''
             })
 
+            setCurrentTotals(tempCurrentTotals)
             setAllocations(tempAllocations)
 
         } catch (error) {
@@ -111,8 +119,10 @@ export default function AssignPettyCash() {
         }))
     }
 
-    const totalAllocated = Object.values(allocations).reduce((sum, val) => sum + Number(val || 0), 0)
-    const remainingBalance = projectPettyCash - totalAllocated
+    const totalAllocatedInInputs = Object.values(allocations).reduce((sum, val) => sum + Number(val || 0), 0)
+    const cumulativeTotals = Object.values(currentTotals).reduce((sum, val) => sum + Number(val || 0), 0)
+    const totalAllocatedAfterUpdate = cumulativeTotals + totalAllocatedInInputs
+    const remainingBalance = projectPettyCash - totalAllocatedAfterUpdate
     const isExceeded = remainingBalance < 0
 
     const handleSubmit = async (e) => {
@@ -126,38 +136,57 @@ export default function AssignPettyCash() {
 
         setLoading(true)
         try {
-            const updates = Object.entries(allocations).map(([userId, amount]) => ({
-                project_id: selectedProjectId,
-                user_id: userId,
-                amount: Number(amount)
-            }))
+            const historyEntries = []
+            const upsertData = []
 
-            if (updates.length === 0) {
-                alert('No users to assign petty cash.')
+            for (const [userId, incrementStr] of Object.entries(allocations)) {
+                const increment = Number(incrementStr) || 0
+                if (increment <= 0) continue
+
+                const currentTotal = currentTotals[userId] || 0
+                const newTotal = currentTotal + increment
+
+                upsertData.push({
+                    project_id: selectedProjectId,
+                    user_id: userId,
+                    amount: newTotal
+                })
+
+                historyEntries.push({
+                    project_id: selectedProjectId,
+                    user_id: userId,
+                    amount: increment,
+                    type: 'Allocation'
+                })
+            }
+
+            if (upsertData.length === 0) {
+                alert('Please enter an amount to assign.')
                 setLoading(false)
                 return
             }
 
-            const { error } = await supabase
+            // 1. Update user totals
+            const { error: upsertError } = await supabase
                 .from('user_petty_cash')
-                .upsert(updates, { onConflict: 'project_id, user_id' })
+                .upsert(upsertData, { onConflict: 'project_id, user_id' })
 
-            if (error) throw error
+            if (upsertError) throw upsertError
 
-            // Log to history for audit trail
-            const historyEntries = updates.map(u => ({
-                project_id: u.project_id,
-                user_id: u.user_id,
-                amount: u.amount,
-                type: 'Allocation Change'
-            }))
+            // 2. Log history
+            const { error: historyError } = await supabase
+                .from('user_petty_cash_history')
+                .insert(historyEntries)
 
-            await supabase.from('user_petty_cash_history').insert(historyEntries)
+            if (historyError) throw historyError
 
-            alert('Petty cash assigned to users successfully!')
+            alert('Petty cash assigned successfully!')
+            
+            // Refresh totals and clear inputs
+            fetchProjectDetails(selectedProjectId)
         } catch (error) {
             console.error('Error assigning petty cash:', error)
-            alert('Error assigning petty cash. Have you run the SQL migration yet?')
+            alert('Error assigning petty cash.')
         } finally {
             setLoading(false)
         }
@@ -240,21 +269,28 @@ export default function AssignPettyCash() {
                             )}
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <label className="block text-sm font-medium text-text-muted mb-2">Allocations</label>
                             {assignedUsers.map(user => (
-                                <div key={user.id} className="flex items-center justify-between gap-4 p-3 bg-midnight-900 border border-midnight-700 rounded-lg">
-                                    <span className="text-text-main font-medium">{user.name}</span>
-                                    <div className="relative w-1/3 min-w-[120px]">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">₹</span>
+                                <div key={user.id} className="p-4 bg-midnight-900 border border-midnight-700 rounded-xl hover:bg-midnight-700/30 transition-colors">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-text-main font-semibold">{user.name}</span>
+                                        <div className="text-right">
+                                            <span className="text-[10px] text-text-muted uppercase tracking-wider block mb-0.5">Cumulative Total</span>
+                                            <span className="text-sm font-bold text-primary">₹{(currentTotals[user.id] || 0).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-medium text-sm">Add ₹</span>
                                         <input
                                             type="number"
-                                            value={allocations[user.id] === 0 ? '' : allocations[user.id]}
+                                            value={allocations[user.id] || ''}
                                             onChange={(e) => handleAllocationChange(user.id, e.target.value)}
                                             placeholder="0.00"
                                             min="0"
                                             step="0.01"
-                                            className="w-full p-2 pl-8 bg-midnight-800 border border-midnight-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main text-right"
+                                            className="w-full p-2.5 pl-14 bg-midnight-800 border border-midnight-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-main text-right pr-4 transition-all"
                                         />
                                     </div>
                                 </div>
