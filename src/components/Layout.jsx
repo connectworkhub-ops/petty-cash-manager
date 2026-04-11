@@ -12,10 +12,17 @@ export default function Layout() {
         { icon: Home, label: 'Home', path: '/' },
         { icon: Grid, label: 'Master', path: '/master', adminOnly: true },
         { icon: Coins, label: 'Expenses', path: '/my-expenses' },
-        { icon: FileBarChart, label: 'Report', path: '/report' },
+        { 
+            icon: FileBarChart, 
+            label: user?.role === 'Admin' ? 'Admin Report' : 'Report', 
+            path: user?.role === 'Admin' ? '/admin-report' : '/report' 
+        },
     ]
 
-    const filteredNavItems = navItems.filter(item => !item.adminOnly || user?.role === 'Admin')
+    const filteredNavItems = navItems.filter(item => {
+        if (item.adminOnly && user?.role !== 'Admin') return false
+        return true
+    })
 
     const handleLogout = () => {
         logout()

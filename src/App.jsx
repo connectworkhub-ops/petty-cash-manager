@@ -11,14 +11,20 @@ import AddUser from './pages/AddUser'
 import AssignUser from './pages/AssignUser'
 import AssignPettyCash from './pages/AssignPettyCash'
 import Login from './pages/Login'
+import AdminReport from './pages/AdminReport'
 import MyExpenses from './pages/MyExpenses'
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
+const ProtectedRoute = ({ children, adminOnly = false, userOnly = false }) => {
     const { user, loading } = useAuth()
 
     if (loading) return null
     if (!user) return <Navigate to="/login" replace />
+    
+    // Admin only pages
     if (adminOnly && user.role !== 'Admin') return <Navigate to="/" replace />
+    
+    // User only pages (Excluding Admin)
+    if (userOnly && user.role === 'Admin') return <Navigate to="/" replace />
 
     return children
 }
@@ -31,7 +37,8 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                         <Route index element={<Home />} />
-                        <Route path="report" element={<Report />} />
+                        <Route path="report" element={<ProtectedRoute userOnly><Report /></ProtectedRoute>} />
+                        <Route path="admin-report" element={<ProtectedRoute adminOnly><AdminReport /></ProtectedRoute>} />
                         <Route path="project/:id" element={<ProjectDetails />} />
                         <Route path="my-expenses" element={<MyExpenses />} />
 

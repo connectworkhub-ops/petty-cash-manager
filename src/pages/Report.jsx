@@ -1,20 +1,31 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Download } from 'lucide-react'
-
+import { Download, Loader2 } from 'lucide-react'
+import { useAuth } from '../lib/AuthContext'
 
 export default function Report() {
+    const { user: currentUser } = useAuth()
     const [reportData, setReportData] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetchReport()
-    }, [])
+        if (currentUser) {
+            fetchReport()
+        }
+    }, [currentUser])
 
     async function fetchReport() {
+        setLoading(true)
         try {
-            const { data: projects } = await supabase.from('projects').select('*')
-            if (!projects) return
+            // Fetch only projects assigned to this user
+            const { data: assignments, error: assignError } = await supabase
+                .from('project_assignments')
+                .select('project_id, projects(*)')
+                .eq('user_id', currentUser.id)
+
+            if (assignError) throw assignError
+
+            const projects = assignments?.map(a => a.projects).filter(Boolean) || []
 
             const report = await Promise.all(projects.map(async (p) => {
                 const { data: cash } = await supabase.from('petty_cash_entries').select('*').eq('project_id', p.id).order('created_at', { ascending: true })
@@ -50,8 +61,6 @@ export default function Report() {
             const { utils, writeFile } = await import('xlsx')
             const wb = utils.book_new()
 
-            // --- Sheet 1: Summary ---
-            // 1. Payment Received History
             const summaryData = [
                 ['Payment Received History'],
                 ['Date', 'Amount'],
@@ -59,18 +68,14 @@ export default function Report() {
                     new Date(c.created_at).toLocaleDateString(),
                     c.amount
                 ]),
-                ['', ''], // Spacer
+                ['', ''],
                 ['Total Expenses Incurred', project.totalExpenses]
             ]
 
             const wsSummary = utils.aoa_to_sheet(summaryData)
-
-            // Adjust column widths for Summary
             wsSummary['!cols'] = [{ wch: 20 }, { wch: 15 }]
-
             utils.book_append_sheet(wb, wsSummary, "Summary")
 
-            // --- Sheet 2: Expenses Incurred ---
             const expenseData = [
                 ['Date', 'Type', 'Head', 'User', 'Description', 'Amount'],
                 ...project.expenses.map(e => [
@@ -84,20 +89,11 @@ export default function Report() {
             ]
 
             const wsExpenses = utils.aoa_to_sheet(expenseData)
-
-            // Adjust column widths for Expenses
             wsExpenses['!cols'] = [
-                { wch: 15 }, // Date
-                { wch: 20 }, // Type
-                { wch: 20 }, // Head
-                { wch: 15 }, // User
-                { wch: 40 }, // Description
-                { wch: 15 }  // Amount
+                { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 40 }, { wch: 15 }
             ]
-
             utils.book_append_sheet(wb, wsExpenses, "Expenses Incurred")
 
-            // Generate Excel File
             writeFile(wb, `${project.name}_Report.xlsx`)
         } catch (error) {
             console.error('Export failed:', error)
@@ -120,11 +116,18 @@ export default function Report() {
                                 <th className="p-4 whitespace-nowrap">Total Petty Cash</th>
                                 <th className="p-4 whitespace-nowrap">Total Expenses</th>
                                 <th className="p-4 whitespace-nowrap">Balance</th>
-                                <th className="p-4 whitespace-nowrap">Action</th>
+                                <th className="p-4 whitespace-nowrap text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-midnight-700">
-                            {reportData.map((row, index) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="6" className="p-8 text-center text-text-muted">
+                                        <Loader2 className="animate-spin inline-block mr-2" />
+                                        Loading report data...
+                                    </td>
+                                </tr>
+                            ) : reportData.map((row, index) => (
                                 <tr key={row.id} className="hover:bg-midnight-700/50 transition-colors">
                                     <td className="p-4 text-text-muted">{index + 1}</td>
                                     <td className="p-4 font-medium text-text-main">{row.name}</td>
@@ -133,7 +136,7 @@ export default function Report() {
                                     <td className={`p-4 font-bold whitespace-nowrap ${row.balance >= 0 ? 'text-secondary' : 'text-danger'}`}>
                                         ₹{row.balance.toLocaleString()}
                                     </td>
-                                    <td className="p-4">
+                                    <td className="p-4 text-center">
                                         <button
                                             onClick={() => handleExport(row)}
                                             disabled={exporting}
@@ -145,10 +148,10 @@ export default function Report() {
                                     </td>
                                 </tr>
                             ))}
-                            {reportData.length === 0 && (
+                            {!loading && reportData.length === 0 && (
                                 <tr>
                                     <td colSpan="6" className="p-8 text-center text-text-muted">
-                                        No data available for report.
+                                        No assigned projects found for reporting.
                                     </td>
                                 </tr>
                             )}

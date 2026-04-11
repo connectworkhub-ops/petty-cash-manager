@@ -144,6 +144,16 @@ export default function AssignPettyCash() {
 
             if (error) throw error
 
+            // Log to history for audit trail
+            const historyEntries = updates.map(u => ({
+                project_id: u.project_id,
+                user_id: u.user_id,
+                amount: u.amount,
+                type: 'Allocation Change'
+            }))
+
+            await supabase.from('user_petty_cash_history').insert(historyEntries)
+
             alert('Petty cash assigned to users successfully!')
         } catch (error) {
             console.error('Error assigning petty cash:', error)
