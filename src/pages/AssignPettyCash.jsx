@@ -8,6 +8,7 @@ export default function AssignPettyCash() {
     const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false)
 
     const [fetching, setFetching] = useState(true)
+    const [fetchingDetails, setFetchingDetails] = useState(false)
     const [loading, setLoading] = useState(false)
     const [projectPettyCash, setProjectPettyCash] = useState(0)
 
@@ -45,7 +46,7 @@ export default function AssignPettyCash() {
     }
 
     async function fetchProjectDetails(projectId) {
-        setFetching(true)
+        setFetchingDetails(true)
         try {
             // 1. Fetch Total Petty Cash for project
             const { data: cashData } = await supabase
@@ -105,18 +106,19 @@ export default function AssignPettyCash() {
             console.error('Error fetching project details:', error)
             alert('Failed to load project details.')
         } finally {
-            setFetching(false)
+            setFetchingDetails(false)
         }
     }
 
     const handleAllocationChange = (userId, value) => {
-        let numericValue = value === '' ? 0 : parseFloat(value)
-        if (isNaN(numericValue) || numericValue < 0) numericValue = 0
-
-        setAllocations(prev => ({
-            ...prev,
-            [userId]: numericValue
-        }))
+        // Keep as string to allow empty input
+        if (value === '' || value === null) {
+            setAllocations(prev => ({ ...prev, [userId]: '' }))
+            return
+        }
+        const numericValue = parseFloat(value)
+        if (isNaN(numericValue) || numericValue < 0) return
+        setAllocations(prev => ({ ...prev, [userId]: value }))
     }
 
     const totalAllocatedInInputs = Object.values(allocations).reduce((sum, val) => sum + Number(val || 0), 0)
@@ -241,7 +243,7 @@ export default function AssignPettyCash() {
                     )}
                 </div>
 
-                {fetching && selectedProjectId ? (
+                {fetchingDetails ? (
                     <div className="flex justify-center p-8">
                         <Loader2 className="animate-spin text-primary" size={32} />
                     </div>
