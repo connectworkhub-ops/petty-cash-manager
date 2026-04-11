@@ -8,16 +8,16 @@ export default {
         extend: {
             colors: {
                 midnight: {
-                    900: '#0f172a', // Deep background
-                    800: '#1e293b', // Card background
-                    700: '#334155', // Border/Input background
+                    900: '#0f172a', // Original Blue Background
+                    800: '#1e293b', // Original Card Background
+                    700: '#334155', // Original Border Background
                 },
-                primary: '#6366f1', // Indigo - Main Action
-                secondary: '#10b981', // Emerald - Success/Accent
-                danger: '#ef4444', // Red - Error/Delete
+                primary: '#6366f1', // Original Indigo
+                secondary: '#10b981', // Original Emerald
+                danger: '#ef4444', 
                 text: {
-                    main: '#f8fafc', // Slate 50
-                    muted: '#94a3b8', // Slate 400
+                    main: '#f8fafc', // Original Slate 50
+                    muted: '#94a3b8', // Original Slate 400
                 }
             },
             fontFamily: {

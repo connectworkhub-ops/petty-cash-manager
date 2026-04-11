@@ -101,10 +101,10 @@ export default function AddProject() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-text-muted mb-1">Logo (JPG, PNG)</label>
+                        <label className="block text-sm font-medium text-text-muted mb-1">Logo (JPG, PNG, WebP)</label>
                         <input
                             type="file"
-                            accept="image/png, image/jpeg, image/jpg"
+                            accept="image/png, image/jpeg, image/jpg, image/webp"
                             onChange={handleLogoChange}
                             className="w-full text-sm text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/80 cursor-pointer"
                         />
