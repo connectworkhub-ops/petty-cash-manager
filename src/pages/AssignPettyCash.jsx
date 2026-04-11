@@ -53,7 +53,7 @@ export default function AssignPettyCash() {
                 .from('petty_cash_entries')
                 .select('amount')
                 .eq('project_id', projectId)
-            
+
             const totalProjectCash = cashData?.reduce((sum, row) => sum + Number(row.amount), 0) || 0
             setProjectPettyCash(totalProjectCash)
 
@@ -83,13 +83,13 @@ export default function AssignPettyCash() {
 
             const tempCurrentTotals = {}
             const tempAllocations = {}
-            
+
             if (allocationsData) {
                 allocationsData.forEach(row => {
                     tempCurrentTotals[row.user_id] = Number(row.amount) || 0
                 })
             }
-            
+
             // Ensure all assigned users exist in state even if 0
             users.forEach(u => {
                 if (!(u.id in tempCurrentTotals)) {
@@ -130,7 +130,7 @@ export default function AssignPettyCash() {
     const handleSubmit = async (e) => {
         e.preventDefault()
         if (!selectedProjectId) return
-        
+
         if (isExceeded) {
             alert('Cannot save: Total allocated exceeds project petty cash limit.')
             return
@@ -183,7 +183,7 @@ export default function AssignPettyCash() {
             if (historyError) throw historyError
 
             alert('Petty cash assigned successfully!')
-            
+
             // Refresh totals and clear inputs
             fetchProjectDetails(selectedProjectId)
         } catch (error) {
@@ -256,7 +256,7 @@ export default function AssignPettyCash() {
                             </div>
                             <div className="flex justify-between text-sm mb-2">
                                 <span className="text-text-muted">Total Allocated to Users:</span>
-                                <span className="font-medium text-text-main">₹{totalAllocated.toFixed(2)}</span>
+                                <span className="font-medium text-text-main">₹{cumulativeTotals.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm pt-2 border-t border-midnight-700">
                                 <span className="text-text-muted">Admin Retained Balance:</span>
@@ -278,11 +278,10 @@ export default function AssignPettyCash() {
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-text-main font-semibold">{user.name}</span>
                                         <div className="text-right">
-                                            <span className="text-[10px] text-text-muted uppercase tracking-wider block mb-0.5">Cumulative Total</span>
-                                            <span className="text-sm font-bold text-primary">₹{(currentTotals[user.id] || 0).toLocaleString()}</span>
+                                            <span className="text-[10px] text-text-muted uppercase tracking-wider block mb-0.5">Total Transferred: ₹{(currentTotals[user.id] || 0).toLocaleString()}</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-medium text-sm">Add ₹</span>
                                         <input
