@@ -1,18 +1,27 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Download, Loader2, History, User, Coins, ChevronRight, X } from 'lucide-react'
+import { Download, Loader2, History, User, Coins, ChevronRight, X, ChevronDown, ChevronUp } from 'lucide-react'
 
 export default function AdminReport() {
     const [reportData, setReportData] = useState([])
     const [loading, setLoading] = useState(true)
-    const [activeModal, setActiveModal] = useState(null) // { type: 'project' | 'transfer', title: string, entries: [] }
+    const [activeModal, setActiveModal] = useState(null)
+    const [collapsedProjects, setCollapsedProjects] = useState({}) // id: boolean
 
     useEffect(() => {
         fetchReport()
     }, [])
 
+    const toggleCollapse = (id) => {
+        setCollapsedProjects(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }))
+    }
+
     async function fetchReport() {
         setLoading(true)
+// ... existing fetchReport code ...
         try {
             const { data: projects } = await supabase.from('projects').select('*').order('name')
             if (!projects) return
@@ -147,104 +156,115 @@ export default function AdminReport() {
                     <Loader2 className="animate-spin text-primary w-10 h-10 mb-4" />
                     <p className="text-text-muted">Analyzing project data...</p>
                 </div>
-            ) : reportData.map((project) => (
-                <div key={project.id} className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
-                    {/* Card Header */}
-                    <div className="bg-midnight-900/50 p-5 flex items-center justify-between border-b border-midnight-700">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                <Coins size={20} />
-                            </div>
-                            <h3 className="text-lg font-bold text-text-main">{project.name}</h3>
-                        </div>
-                        <button
-                            onClick={() => handleExport(project)}
-                            disabled={exporting === project.id}
-                            className="text-primary hover:text-primary/80 font-medium text-sm flex items-center gap-1 transition-colors"
+            ) : reportData.map((project) => {
+                const isCollapsed = collapsedProjects[project.id]
+                return (
+                    <div key={project.id} className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
+                        {/* Card Header */}
+                        <div 
+                            onClick={() => toggleCollapse(project.id)}
+                            className="bg-midnight-900/50 p-5 flex items-center justify-between border-b border-midnight-700 cursor-pointer hover:bg-midnight-900 transition-colors"
                         >
-                            {exporting === project.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                            Export
-                        </button>
-                    </div>
-
-                    {/* Project Totals */}
-                    <div className="p-5">
-                        <div className="grid grid-cols-2 gap-y-4 gap-x-8">
-                            <div>
-                                <span className="text-xs text-text-muted font-medium mb-1 block">Total Petty Cash Rec:</span>
-                                <button 
-                                    onClick={() => setActiveModal({ 
-                                        type: 'project', 
-                                        title: `History: ${project.name}`, 
-                                        entries: project.cashEntries 
-                                    })}
-                                    className="text-lg font-bold text-text-main hover:text-primary transition-colors flex items-center gap-1.5"
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                    <Coins size={20} />
+                                </div>
+                                <h3 className="text-lg font-bold text-text-main">{project.name}</h3>
+                                {isCollapsed ? <ChevronDown size={18} className="text-text-muted" /> : <ChevronUp size={18} className="text-text-muted" />}
+                            </div>
+                            <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                    onClick={() => handleExport(project)}
+                                    disabled={exporting === project.id}
+                                    className="text-primary hover:text-primary/80 font-medium text-sm flex items-center gap-1 transition-colors"
                                 >
-                                    ₹{project.totalProjectRec.toLocaleString()}
-                                    <History size={14} className="text-text-muted" />
-                                </button>
-                            </div>
-                            <div>
-                                <span className="text-xs text-text-muted font-medium mb-1 block">Total Petty Cash Balance:</span>
-                                <span className={`text-lg font-bold ${project.projectBalance >= 0 ? 'text-emerald-500' : 'text-danger'}`}>
-                                    ₹{project.projectBalance.toLocaleString()}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-xs text-text-muted font-medium mb-1 block">Total Petty Cash Used:</span>
-                                <span className="text-lg font-bold text-text-main">
-                                    ₹{project.totalProjectUsed.toLocaleString()}
-                                </span>
-                            </div>
-                            <div className="flex flex-col justify-end">
-                                <span className="text-xs text-text-muted font-medium mb-1 block">Transfer History:</span>
-                                <button 
-                                    onClick={() => setActiveModal({ 
-                                        type: 'transfer', 
-                                        title: `Transfer History: ${project.name}`, 
-                                        entries: project.transferHistory 
-                                    })}
-                                    className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
-                                >
-                                    View
-                                    <ChevronRight size={14} />
+                                    {exporting === project.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                                    Export
                                 </button>
                             </div>
                         </div>
 
-                        {/* User Sections Divider */}
-                        <div className="mt-8 mb-4 border-t border-midnight-700/50 pt-4">
-                            <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">User-wise breakdown</h4>
-                            <div className="space-y-4">
-                                {project.userSummaries.map((user) => (
-                                    <div key={user.userId} className="bg-midnight-900/30 rounded-xl p-4 border border-midnight-700">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <User size={14} className="text-primary" />
-                                            <span className="font-semibold text-text-main text-sm">{user.userName}:</span>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] text-text-muted uppercase mb-1">Total Rec</span>
-                                                <span className="text-sm font-medium text-text-main">₹{user.received.toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] text-text-muted uppercase mb-1">Total Used</span>
-                                                <span className="text-sm font-medium text-text-main">₹{user.used.toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] text-text-muted uppercase mb-1">Total Balance</span>
-                                                <span className={`text-sm font-bold ${user.balance >= 0 ? 'text-emerald-500' : 'text-danger'}`}>
-                                                    ₹{user.balance.toLocaleString()}
-                                                </span>
-                                            </div>
-                                        </div>
+                        {/* Project Totals */}
+                        {!isCollapsed && (
+                            <div className="p-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                                    <div>
+                                        <span className="text-xs text-text-muted font-medium mb-1 block">Total Petty Cash Rec:</span>
+                                        <button 
+                                            onClick={() => setActiveModal({ 
+                                                type: 'project', 
+                                                title: `History: ${project.name}`, 
+                                                entries: project.cashEntries 
+                                            })}
+                                            className="text-lg font-bold text-text-main hover:text-primary transition-colors flex items-center gap-1.5"
+                                        >
+                                            ₹{project.totalProjectRec.toLocaleString()}
+                                            <History size={14} className="text-text-muted" />
+                                        </button>
                                     </div>
-                                ))}
+                                    <div>
+                                        <span className="text-xs text-text-muted font-medium mb-1 block">Total Petty Cash Balance:</span>
+                                        <span className={`text-lg font-bold ${project.projectBalance >= 0 ? 'text-emerald-500' : 'text-danger'}`}>
+                                            ₹{project.projectBalance.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-text-muted font-medium mb-1 block">Total Petty Cash Used:</span>
+                                        <span className="text-lg font-bold text-text-main">
+                                            ₹{project.totalProjectUsed.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col justify-end">
+                                        <span className="text-xs text-text-muted font-medium mb-1 block">Transfer History:</span>
+                                        <button 
+                                            onClick={() => setActiveModal({ 
+                                                type: 'transfer', 
+                                                title: `Transfer History: ${project.name}`, 
+                                                entries: project.transferHistory 
+                                            })}
+                                            className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
+                                        >
+                                            View
+                                            <ChevronRight size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* User Sections Divider */}
+                                <div className="mt-8 mb-4 border-t border-midnight-700/50 pt-4">
+                                    <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">User-wise breakdown</h4>
+                                    <div className="space-y-4">
+                                        {project.userSummaries.map((user) => (
+                                            <div key={user.userId} className="bg-midnight-900/30 rounded-xl p-4 border border-midnight-700">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <User size={14} className="text-primary" />
+                                                    <span className="font-semibold text-text-main text-sm">{user.userName}:</span>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-text-muted uppercase mb-1">Total Rec</span>
+                                                        <span className="text-sm font-medium text-text-main">₹{user.received.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-text-muted uppercase mb-1">Total Used</span>
+                                                        <span className="text-sm font-medium text-text-main">₹{user.used.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-text-muted uppercase mb-1">Total Balance</span>
+                                                        <span className={`text-sm font-bold ${user.balance >= 0 ? 'text-emerald-500' : 'text-danger'}`}>
+                                                            ₹{user.balance.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
-                </div>
-            ))}
+                )
+            })}
 
             {/* Modal Overlay */}
             {activeModal && (
