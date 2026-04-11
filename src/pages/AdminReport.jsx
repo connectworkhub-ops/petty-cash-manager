@@ -238,7 +238,7 @@ export default function AdminReport() {
                                             <div key={user.userId} className="bg-midnight-900/30 rounded-xl p-4 border border-midnight-700">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <User size={14} className="text-primary" />
-                                                    <span className="font-semibold text-text-main text-sm">{user.userName}:</span>
+                                                    <span className="font-semibold text-text-main text-sm">{user.userName}</span>
                                                 </div>
                                                 <div className="grid grid-cols-3 gap-2">
                                                     <div className="flex flex-col">
