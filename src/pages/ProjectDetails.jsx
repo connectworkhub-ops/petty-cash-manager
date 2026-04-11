@@ -176,18 +176,18 @@ export default function ProjectDetails() {
                 <h2 className="text-2xl font-bold text-text-main">{project.name}</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-3xl">
-                <div className="bg-midnight-800 p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
-                    <span className="text-text-muted text-sm font-medium mb-1">Petty Cash</span>
-                    {fetchingBalance ? <Loader2 className="animate-spin w-5 h-5 text-text-muted" /> : <span className="text-base font-semibold text-text-main">₹{userBalanceInfo.allocated.toFixed(2)}</span>}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8 max-w-3xl">
+                <div className="bg-midnight-800 p-3 sm:p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
+                    <span className="text-text-muted text-[10px] sm:text-sm font-medium mb-1 truncate">Petty Cash</span>
+                    {fetchingBalance ? <Loader2 className="animate-spin w-4 h-4 sm:w-5 sm:h-5 text-text-muted" /> : <span className="text-sm sm:text-base font-semibold text-text-main truncate">₹{userBalanceInfo.allocated.toFixed(2)}</span>}
                 </div>
-                <div className="bg-midnight-800 p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
-                    <span className="text-text-muted text-sm font-medium mb-1">Total Spent</span>
-                    {fetchingBalance ? <Loader2 className="animate-spin w-5 h-5 text-text-muted" /> : <span className="text-base font-semibold text-primary">₹{userBalanceInfo.spent.toFixed(2)}</span>}
+                <div className="bg-midnight-800 p-3 sm:p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
+                    <span className="text-text-muted text-[10px] sm:text-sm font-medium mb-1 truncate">Total Spent</span>
+                    {fetchingBalance ? <Loader2 className="animate-spin w-4 h-4 sm:w-5 sm:h-5 text-text-muted" /> : <span className="text-sm sm:text-base font-semibold text-primary truncate">₹{userBalanceInfo.spent.toFixed(2)}</span>}
                 </div>
-                <div className="bg-midnight-800 p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
-                    <span className="text-text-muted text-sm font-medium mb-1">Balance</span>
-                    {fetchingBalance ? <Loader2 className="animate-spin w-5 h-5 text-text-muted" /> : <span className={`text-base font-semibold ${userBalanceInfo.remaining < 0 ? 'text-danger' : 'text-emerald-500'}`}>₹{userBalanceInfo.remaining.toFixed(2)}</span>}
+                <div className="bg-midnight-800 p-3 sm:p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
+                    <span className="text-text-muted text-[10px] sm:text-sm font-medium mb-1 truncate">Balance</span>
+                    {fetchingBalance ? <Loader2 className="animate-spin w-4 h-4 sm:w-5 sm:h-5 text-text-muted" /> : <span className={`text-sm sm:text-base font-semibold truncate ${userBalanceInfo.remaining < 0 ? 'text-danger' : 'text-emerald-500'}`}>₹{userBalanceInfo.remaining.toFixed(2)}</span>}
                 </div>
             </div>
 
