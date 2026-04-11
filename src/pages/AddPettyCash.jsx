@@ -65,6 +65,7 @@ export default function AddPettyCash() {
             .select('*')
             .eq('project_id', project.id)
             .order('created_at', { ascending: false })
+            .order('id', { ascending: false })
 
         setHistoryPopup({ project, entries: data || [] })
     }
@@ -87,6 +88,7 @@ export default function AddPettyCash() {
                 .select('*')
                 .eq('project_id', historyPopup.project.id)
                 .order('created_at', { ascending: false })
+                .order('id', { ascending: false })
 
             setHistoryPopup(prev => ({ ...prev, entries: data || [] }))
             setEditingEntry(null)

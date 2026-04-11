@@ -62,6 +62,7 @@ export default function MyExpenses() {
                 .eq('project_id', projectId)
                 .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false })
+                .order('id', { ascending: false })
 
             if (error) throw error
             setExpenses(data || [])

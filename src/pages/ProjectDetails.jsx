@@ -183,7 +183,7 @@ export default function ProjectDetails() {
                 </div>
                 <div className="bg-midnight-800 p-3 sm:p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
                     <span className="text-text-muted text-[10px] sm:text-sm font-medium mb-1 truncate">Total Spent</span>
-                    {fetchingBalance ? <Loader2 className="animate-spin w-4 h-4 sm:w-5 sm:h-5 text-text-muted" /> : <span className="text-sm sm:text-base font-semibold text-primary truncate">₹{userBalanceInfo.spent.toFixed(2)}</span>}
+                    {fetchingBalance ? <Loader2 className="animate-spin w-4 h-4 sm:w-5 sm:h-5 text-text-muted" /> : <span className="text-sm sm:text-base font-semibold text-danger truncate">₹{userBalanceInfo.spent.toFixed(2)}</span>}
                 </div>
                 <div className="bg-midnight-800 p-3 sm:p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
                     <span className="text-text-muted text-[10px] sm:text-sm font-medium mb-1 truncate">Balance</span>
