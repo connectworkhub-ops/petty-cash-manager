@@ -10,10 +10,12 @@ export default function ProjectDetails() {
     const { user: currentUser } = useAuth()
     const [project, setProject] = useState(null)
     const [loading, setLoading] = useState(false)
+    const [userBalanceInfo, setUserBalanceInfo] = useState({ allocated: 0, spent: 0, remaining: 0 })
+    const [fetchingBalance, setFetchingBalance] = useState(true)
 
     // Form State
     const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-    const [type, setType] = useState('Travelling Expense')
+    const [type, setType] = useState('Select')
     const [head, setHead] = useState('')
     const [description, setDescription] = useState('')
     const [amount, setAmount] = useState('')
@@ -23,9 +25,16 @@ export default function ProjectDetails() {
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
 
     const expenseTypes = [
+        'Select',
         'Travelling Expense',
         'Food Expense',
         'Transport Expense',
+        'Hotel Accomodation',
+        'Production',
+        'Manpower Expenses',
+        'Stationery',
+        'Fuel Expenses',
+        'Rental Expneses',
         'Other Expense'
     ]
 
@@ -33,6 +42,46 @@ export default function ProjectDetails() {
         fetchProject()
         fetchAssignedUsers()
     }, [id])
+
+    useEffect(() => {
+        if (id && currentUser) {
+            fetchUserBalance()
+        }
+    }, [id, currentUser])
+
+    async function fetchUserBalance() {
+        setFetchingBalance(true)
+        try {
+            let allocated = 0;
+            let spent = 0;
+
+            if (currentUser?.role === 'Admin') {
+                const { data: cashData } = await supabase.from('petty_cash_entries').select('amount').eq('project_id', id)
+                const totalProjectCash = cashData?.reduce((sum, row) => sum + Number(row.amount), 0) || 0
+
+                const { data: allocData } = await supabase.from('user_petty_cash').select('amount').eq('project_id', id)
+                const totalAllocated = allocData?.reduce((sum, row) => sum + Number(row.amount), 0) || 0
+
+                allocated = totalProjectCash - totalAllocated;
+            } else {
+                const { data: allocData } = await supabase.from('user_petty_cash').select('amount').eq('project_id', id).eq('user_id', currentUser?.id).single()
+                allocated = allocData ? Number(allocData.amount) : 0;
+            }
+
+            const { data: expenseData } = await supabase.from('expenses').select('amount').eq('project_id', id).eq('user_id', currentUser?.id)
+            spent = expenseData?.reduce((sum, row) => sum + Number(row.amount), 0) || 0
+
+            setUserBalanceInfo({
+                allocated: allocated,
+                spent: spent,
+                remaining: allocated - spent
+            })
+        } catch (error) {
+            console.error('Error fetching balance:', error)
+        } finally {
+            setFetchingBalance(false)
+        }
+    }
 
     async function fetchAssignedUsers() {
         try {
@@ -83,7 +132,8 @@ export default function ProjectDetails() {
                 created_at: new Date(date).toISOString(),
                 expense_type: type,
                 expense_head: head,
-                user_name: selectedUser?.name || 'Nikhil',
+                user_name: currentUser?.role === 'Admin' ? currentUser?.name : (selectedUser?.name || currentUser?.name || 'User'),
+                user_id: currentUser?.id,
                 description,
                 amount: parseFloat(amount)
             }])
@@ -96,7 +146,8 @@ export default function ProjectDetails() {
             setDescription('')
             setAmount('')
             setDate(new Date().toISOString().split('T')[0])
-            setType('Travelling Expense')
+            setType('Select')
+            await fetchUserBalance()
             if (assignedUsers.length > 0) {
                 setSelectedUser(assignedUsers[0])
             }
@@ -123,6 +174,21 @@ export default function ProjectDetails() {
                     </div>
                 )}
                 <h2 className="text-2xl font-bold text-text-main">{project.name}</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-3xl">
+                <div className="bg-midnight-800 p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
+                    <span className="text-text-muted text-sm font-medium mb-1">Petty Cash</span>
+                    {fetchingBalance ? <Loader2 className="animate-spin w-5 h-5 text-text-muted" /> : <span className="text-base font-semibold text-text-main">₹{userBalanceInfo.allocated.toFixed(2)}</span>}
+                </div>
+                <div className="bg-midnight-800 p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
+                    <span className="text-text-muted text-sm font-medium mb-1">Total Spent</span>
+                    {fetchingBalance ? <Loader2 className="animate-spin w-5 h-5 text-text-muted" /> : <span className="text-base font-semibold text-primary">₹{userBalanceInfo.spent.toFixed(2)}</span>}
+                </div>
+                <div className="bg-midnight-800 p-5 rounded-xl shadow-lg border border-midnight-700 flex flex-col justify-center">
+                    <span className="text-text-muted text-sm font-medium mb-1">Balance</span>
+                    {fetchingBalance ? <Loader2 className="animate-spin w-5 h-5 text-text-muted" /> : <span className={`text-base font-semibold ${userBalanceInfo.remaining < 0 ? 'text-danger' : 'text-emerald-500'}`}>₹{userBalanceInfo.remaining.toFixed(2)}</span>}
+                </div>
             </div>
 
             <div className="bg-midnight-800 p-6 rounded-xl shadow-lg border border-midnight-700 max-w-3xl">
@@ -186,52 +252,10 @@ export default function ProjectDetails() {
 
                     <div className="relative">
                         <label className="block text-sm font-medium text-text-muted mb-1.5">User</label>
-                        {currentUser?.role === 'Admin' && assignedUsers.length > 1 ? (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsUserDropdownOpen(!isUserDropdownOpen)
-                                        setIsTypeDropdownOpen(false)
-                                    }}
-                                    className="w-full p-2.5 bg-midnight-900 border border-midnight-700 rounded-lg flex items-center justify-between text-text-main focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <User size={16} className="text-text-muted" />
-                                        <span>{selectedUser?.name || 'Select User'}</span>
-                                    </div>
-                                    {isUserDropdownOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                                </button>
-
-                                {isUserDropdownOpen && (
-                                    <div className="absolute z-20 mt-2 w-full bg-midnight-800 border border-midnight-700 rounded-lg shadow-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                        {assignedUsers.map((user) => (
-                                            <div
-                                                key={user.id}
-                                                onClick={() => {
-                                                    setSelectedUser(user)
-                                                    setIsUserDropdownOpen(false)
-                                                }}
-                                                className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors mb-1 last:mb-0 ${selectedUser?.id === user.id ? 'bg-primary/20 text-primary' : 'hover:bg-midnight-700 text-text-muted'
-                                                    }`}
-                                            >
-                                                <span className="text-sm font-medium">{user.name}</span>
-                                                {selectedUser?.id === user.id && <CheckCircle2 size={16} />}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <div className="w-full p-2.5 border border-midnight-700 rounded-lg bg-midnight-900/50 text-text-muted flex items-center gap-2">
-                                <User size={16} className="text-text-muted/50" />
-                                <span>
-                                    {currentUser?.role === 'Admin'
-                                        ? (assignedUsers.length === 1 ? assignedUsers[0].name : 'No users assigned')
-                                        : currentUser?.name}
-                                </span>
-                            </div>
-                        )}
+                        <div className="w-full p-2.5 border border-midnight-700 rounded-lg bg-midnight-900/50 text-text-muted flex items-center gap-2 cursor-not-allowed">
+                            <User size={16} className="text-text-muted/50" />
+                            <span>{currentUser?.name || 'Unknown'}</span>
+                        </div>
                     </div>
 
                     <div>

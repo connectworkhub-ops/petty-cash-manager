@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { PlusSquare, Wallet, UserPlus, Users } from 'lucide-react'
+import { PlusSquare, Wallet, UserPlus, Users, Banknote } from 'lucide-react'
 
 export default function Master() {
     return (
@@ -56,6 +56,19 @@ export default function Master() {
                     <div>
                         <h3 className="text-lg font-semibold text-text-main">Add Petty Cash</h3>
                         <p className="text-sm text-text-muted">Record cash inflows</p>
+                    </div>
+                </Link>
+
+                <Link
+                    to="/assign-petty-cash"
+                    className="bg-midnight-800 p-6 rounded-xl shadow-lg border border-midnight-700 flex items-center gap-4 hover:bg-midnight-700 transition-colors group"
+                >
+                    <div className="p-3 bg-rose-500/10 rounded-lg text-rose-500 group-hover:bg-rose-500/20 transition-colors">
+                        <Banknote size={32} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold text-text-main">Assign Petty Cash</h3>
+                        <p className="text-sm text-text-muted">Distribute petty cash to users</p>
                     </div>
                 </Link>
             </div>

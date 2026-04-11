@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { Home, PlusSquare, Wallet, FileBarChart, Grid, LogOut } from 'lucide-react'
+import { Home, PlusSquare, Wallet, FileBarChart, Grid, LogOut, Coins } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '../lib/AuthContext'
 
@@ -11,6 +11,7 @@ export default function Layout() {
     const navItems = [
         { icon: Home, label: 'Home', path: '/' },
         { icon: Grid, label: 'Master', path: '/master', adminOnly: true },
+        { icon: Coins, label: 'Expenses', path: '/my-expenses' },
         { icon: FileBarChart, label: 'Report', path: '/report' },
     ]
 

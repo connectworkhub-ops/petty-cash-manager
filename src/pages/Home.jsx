@@ -2,30 +2,80 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import { useAuth } from '../lib/AuthContext'
 
 export default function Home() {
+    const { user: currentUser } = useAuth()
     const [projects, setProjects] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetchProjects()
-    }, [])
+        if (currentUser) {
+            fetchProjects()
+        }
+    }, [currentUser])
 
     async function fetchProjects() {
+        setLoading(true)
         try {
-            const { data: projectsData, error: projectsError } = await supabase
-                .from('projects')
-                .select('*, petty_cash_entries(amount), expenses(amount)')
+            if (currentUser?.role === 'Admin') {
+                const { data: projectsData, error: projectsError } = await supabase
+                    .from('projects')
+                    .select('*, petty_cash_entries(amount), expenses(amount)')
 
-            if (projectsError) throw projectsError
+                if (projectsError) throw projectsError
 
-            const projectsWithTotals = projectsData.map(project => {
-                const totalCash = project.petty_cash_entries?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
-                const totalExpenses = project.expenses?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
-                return { ...project, totalCash, totalExpenses }
-            })
+                const projectsWithTotals = projectsData.map(project => {
+                    const totalCash = project.petty_cash_entries?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
+                    const totalExpenses = project.expenses?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0
+                    return { ...project, totalCash, totalExpenses }
+                })
 
-            setProjects(projectsWithTotals)
+                setProjects(projectsWithTotals)
+            } else {
+                // Fetch projects assigned to the user
+                const { data: assignments, error: assignmentError } = await supabase
+                    .from('project_assignments')
+                    .select('project_id, projects(*)')
+                    .eq('user_id', currentUser.id)
+
+                if (assignmentError) throw assignmentError
+
+                const userProjects = assignments.map(a => a.projects).filter(Boolean)
+
+                // Fetch allocations for the user
+                const { data: allocations, error: allocError } = await supabase
+                    .from('user_petty_cash')
+                    .select('project_id, amount')
+                    .eq('user_id', currentUser.id)
+                
+                // Fetch expenses for the user
+                const { data: userExpenses, error: expError } = await supabase
+                    .from('expenses')
+                    .select('project_id, amount')
+                    .eq('user_id', currentUser.id)
+
+                const allocationsMap = {}
+                allocations?.forEach(a => {
+                    allocationsMap[a.project_id] = Number(a.amount)
+                })
+
+                const expensesMap = {}
+                userExpenses?.forEach(e => {
+                    if (!expensesMap[e.project_id]) expensesMap[e.project_id] = 0
+                    expensesMap[e.project_id] += Number(e.amount)
+                })
+
+                const projectsWithTotals = userProjects.map(project => {
+                    return { 
+                        ...project, 
+                        totalCash: allocationsMap[project.id] || 0, 
+                        totalExpenses: expensesMap[project.id] || 0 
+                    }
+                })
+
+                setProjects(projectsWithTotals)
+            }
         } catch (error) {
             console.error('Error fetching projects:', error)
         } finally {
@@ -47,7 +97,7 @@ export default function Home() {
                         onClick={(e) => {
                             if (!hasCash) {
                                 e.preventDefault()
-                                alert("Add Petty Cash to the Project.")
+                                alert(currentUser?.role === 'Admin' ? "Add Petty Cash to the Project." : "No petty cash assigned to this project.")
                             }
                         }}
                         className={`bg-midnight-800 p-4 rounded-xl shadow-lg border border-midnight-700 relative block transition-all duration-200 ${hasCash ? 'hover:scale-[1.02] active:scale-[0.98] hover:shadow-primary/10 hover:border-primary/50' : 'opacity-70 cursor-not-allowed'}`}
@@ -65,7 +115,7 @@ export default function Home() {
 
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Received</span>
+                                <span className="text-xs font-medium text-text-muted uppercase tracking-wider">{currentUser?.role === 'Admin' ? 'Received' : 'Allocated'}</span>
                                 <span className="text-secondary font-medium text-sm">₹{project.totalCash.toLocaleString()}</span>
                             </div>
 
@@ -86,7 +136,7 @@ export default function Home() {
                         <Loader2 className="text-text-muted" size={24} />
                     </div>
                     <h3 className="text-lg font-medium text-text-main">No projects found</h3>
-                    <p className="text-text-muted mt-1">Get started by adding a new project.</p>
+                    <p className="text-text-muted mt-1">{currentUser?.role === 'Admin' ? 'Get started by adding a new project.' : 'You have not been assigned to any projects.'}</p>
                 </div>
             )}
         </div>

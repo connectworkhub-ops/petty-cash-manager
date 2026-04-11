@@ -9,7 +9,9 @@ import ProjectDetails from './pages/ProjectDetails'
 import Master from './pages/Master'
 import AddUser from './pages/AddUser'
 import AssignUser from './pages/AssignUser'
+import AssignPettyCash from './pages/AssignPettyCash'
 import Login from './pages/Login'
+import MyExpenses from './pages/MyExpenses'
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
     const { user, loading } = useAuth()
@@ -31,6 +33,7 @@ function App() {
                         <Route index element={<Home />} />
                         <Route path="report" element={<Report />} />
                         <Route path="project/:id" element={<ProjectDetails />} />
+                        <Route path="my-expenses" element={<MyExpenses />} />
 
                         {/* Admin Only Routes */}
                         <Route path="master" element={<ProtectedRoute adminOnly><Master /></ProtectedRoute>} />
@@ -38,6 +41,7 @@ function App() {
                         <Route path="add-petty-cash" element={<ProtectedRoute adminOnly><AddPettyCash /></ProtectedRoute>} />
                         <Route path="add-user" element={<ProtectedRoute adminOnly><AddUser /></ProtectedRoute>} />
                         <Route path="assign-user" element={<ProtectedRoute adminOnly><AssignUser /></ProtectedRoute>} />
+                        <Route path="assign-petty-cash" element={<ProtectedRoute adminOnly><AssignPettyCash /></ProtectedRoute>} />
 
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Route>
