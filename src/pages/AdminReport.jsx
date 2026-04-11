@@ -21,7 +21,7 @@ export default function AdminReport() {
 
     async function fetchReport() {
         setLoading(true)
-// ... existing fetchReport code ...
+        // ... existing fetchReport code ...
         try {
             const { data: projects } = await supabase.from('projects').select('*').order('name')
             if (!projects) return
@@ -149,7 +149,7 @@ export default function AdminReport() {
 
     return (
         <div className="space-y-6 pb-20">
-            <h2 className="text-xl font-semibold text-text-main">Admin Project Reports</h2>
+            <h2 className="text-xl font-semibold text-text-main">Admin Reports</h2>
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center p-12 bg-midnight-800 rounded-xl border border-midnight-700">
@@ -161,7 +161,7 @@ export default function AdminReport() {
                 return (
                     <div key={project.id} className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
                         {/* Card Header */}
-                        <div 
+                        <div
                             onClick={() => toggleCollapse(project.id)}
                             className="bg-midnight-900/50 p-5 flex items-center justify-between border-b border-midnight-700 cursor-pointer hover:bg-midnight-900 transition-colors"
                         >
@@ -190,11 +190,11 @@ export default function AdminReport() {
                                 <div className="grid grid-cols-2 gap-y-4 gap-x-8">
                                     <div>
                                         <span className="text-xs text-text-muted font-medium mb-1 block">Total Petty Cash Rec:</span>
-                                        <button 
-                                            onClick={() => setActiveModal({ 
-                                                type: 'project', 
-                                                title: `History: ${project.name}`, 
-                                                entries: project.cashEntries 
+                                        <button
+                                            onClick={() => setActiveModal({
+                                                type: 'project',
+                                                title: `History: ${project.name}`,
+                                                entries: project.cashEntries
                                             })}
                                             className="text-lg font-bold text-text-main hover:text-primary transition-colors flex items-center gap-1.5"
                                         >
@@ -210,17 +210,17 @@ export default function AdminReport() {
                                     </div>
                                     <div>
                                         <span className="text-xs text-text-muted font-medium mb-1 block">Total Petty Cash Used:</span>
-                                        <span className="text-lg font-bold text-text-main">
+                                        <span className="text-lg font-bold text-danger">
                                             ₹{project.totalProjectUsed.toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex flex-col justify-end">
                                         <span className="text-xs text-text-muted font-medium mb-1 block">Transfer History:</span>
-                                        <button 
-                                            onClick={() => setActiveModal({ 
-                                                type: 'transfer', 
-                                                title: `Transfer History: ${project.name}`, 
-                                                entries: project.transferHistory 
+                                        <button
+                                            onClick={() => setActiveModal({
+                                                type: 'transfer',
+                                                title: `Transfer History: ${project.name}`,
+                                                entries: project.transferHistory
                                             })}
                                             className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
                                         >
@@ -247,7 +247,7 @@ export default function AdminReport() {
                                                     </div>
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] text-text-muted uppercase mb-1">Total Used</span>
-                                                        <span className="text-sm font-medium text-text-main">₹{user.used.toLocaleString()}</span>
+                                                        <span className="text-sm font-medium text-danger">₹{user.used.toLocaleString()}</span>
                                                     </div>
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] text-text-muted uppercase mb-1">Total Balance</span>
@@ -304,7 +304,7 @@ export default function AdminReport() {
                             )}
                         </div>
                         <div className="p-4 bg-midnight-900/50 text-center">
-                            <button 
+                            <button
                                 onClick={() => setActiveModal(null)}
                                 className="w-full bg-midnight-700 hover:bg-midnight-600 text-text-main py-2 rounded-xl transition-colors font-medium"
                             >
