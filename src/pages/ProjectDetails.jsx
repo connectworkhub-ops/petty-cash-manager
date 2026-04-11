@@ -167,9 +167,9 @@ export default function ProjectDetails() {
 
             <div className="flex items-center gap-4 mb-8">
                 {project.logo ? (
-                    <img src={project.logo} alt={project.name} className="w-16 h-16 rounded-xl object-cover bg-midnight-900 shadow-sm border border-midnight-700" />
+                    <img src={project.logo} alt={project.name} className="w-14 h-14 md:w-16 md:h-16 rounded-xl object-contain p-1 border border-midnight-700" />
                 ) : (
-                    <div className="w-16 h-16 rounded-xl bg-midnight-900 border border-midnight-700 flex items-center justify-center text-text-muted">
+                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-midnight-900 border border-midnight-700 flex items-center justify-center text-text-muted">
                         <span className="text-xs">No Logo</span>
                     </div>
                 )}
