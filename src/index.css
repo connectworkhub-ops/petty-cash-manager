@@ -6,9 +6,12 @@
 
 @layer base {
   body {
-    @apply bg-black/90 text-text-main antialiased;
-    font-family: 'Poppins', sans-serif !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply bg-midnight-900 text-text-main antialiased tracking-tight;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  /* Smooth transitions for all interactive elements */
+  a, button, input, select, textarea {
+    @apply transition-all duration-200 ease-in-out;
   }
 }
