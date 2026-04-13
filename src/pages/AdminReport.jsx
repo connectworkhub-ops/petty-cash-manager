@@ -149,7 +149,7 @@ export default function AdminReport() {
 
     return (
         <div className="space-y-6 pb-20">
-            <h2 className="text-xl font-semibold text-text-main">Reports</h2>
+            <h2 className="text-xl font-semibold text-text-main">Admin Reports</h2>
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center p-12 bg-midnight-800 rounded-xl border border-midnight-700">
