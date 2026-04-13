@@ -113,17 +113,19 @@ export default function Home() {
                             <h3 className="font-semibold text-lg text-text-main line-clamp-2">{project.name}</h3>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs font-medium text-text-muted uppercase tracking-wider">{currentUser?.role === 'Admin' ? 'Received' : 'Allocated'}</span>
-                                <span className="text-secondary font-medium text-sm">₹{project.totalCash.toLocaleString()}</span>
+                        <div>
+                            <div className="grid grid-cols-3 text-center gap-2">
+                                <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">{currentUser?.role === 'Admin' ? 'Received' : 'Allocated'}</span>
+                                <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Expenses</span>
+                                <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Balance</span>
                             </div>
 
-                            <div className="w-full h-px bg-midnight-700"></div>
+                            <div className="w-full h-px bg-midnight-700 my-2"></div>
 
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Expenses</span>
-                                <span className="text-danger font-medium text-sm">₹{project.totalExpenses.toLocaleString()}</span>
+                            <div className="grid grid-cols-3 text-center gap-2">
+                                <span className="text-white font-medium text-xs">₹{project.totalCash.toLocaleString()}</span>
+                                <span className="text-danger font-medium text-xs">₹{project.totalExpenses.toLocaleString()}</span>
+                                <span className={`font-medium text-xs ${(project.totalCash - project.totalExpenses) >= 0 ? 'text-secondary' : 'text-danger'}`}>₹{(project.totalCash - project.totalExpenses).toLocaleString()}</span>
                             </div>
                         </div>
                     </Link>
